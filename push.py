@@ -1,11 +1,12 @@
+import os
 import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-# Coloque o token do seu bot aqui
-TELEGRAM_TOKEN = '7664162459:AAH4Edm5i9Ju8htfmHgVhxcV2C94J4mNcJg'
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 EXATO_TOKEN = '268753a9b3a24819ae0f02159dee6724'
 
+# Função para o comando /cpf
 async def cpf(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text('Por favor, envie o CPF. Exemplo: /cpf 18845258653')
@@ -29,9 +30,18 @@ async def cpf(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except requests.exceptions.RequestException as e:
         await update.message.reply_text(f"❌ Erro ao buscar CPF: {e}")
 
+# Função para o comando /start
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "👋 Bem-vindo ao Bot de Consulta!\n\n"
+        "Comandos disponíveis:\n"
+        "/cpf <número> - Consultar informações de um CPF.\n"
+    )
+
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
+    app.add_handler(CommandHandler('start', start))   # <-- adicionamos aqui
     app.add_handler(CommandHandler('cpf', cpf))
 
     app.run_polling()
