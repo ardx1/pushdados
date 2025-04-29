@@ -3,9 +3,9 @@ import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-# Lendo o token do bot do Telegram a partir de uma variável de ambiente
-TELEGRAM_TOKEN = os.getenv("7664162459:AAH4Edm5i9Ju8htfmHgVhxcV2C94J4mNcJg")
-EXATO_TOKEN = os.getenv("268753a9b3a24819ae0f02159dee6724")
+# Lendo o token do bot do Telegram e o token da API Exato a partir de variáveis de ambiente
+TELEGRAM_TOKEN = os.getenv("7664162459:AAH4Edm5i9Ju8htfmHgVhxcV2C94J4mNcJg")  # Certifique-se de configurar essa variável no ambiente de produção
+EXATO_TOKEN = os.getenv("268753a9b3a24819ae0f02159dee6724")  # Certifique-se de configurar essa variável no ambiente de produção
 
 # Função para o comando /cpf
 async def cpf(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -28,7 +28,7 @@ async def cpf(update: Update, context: ContextTypes.DEFAULT_TYPE):
         import json
         formatted_data = json.dumps(data, indent=2, ensure_ascii=False)
 
-        # Envia a resposta de volta no Telegram
+        # Envia a resposta de volta no Telegram (limitando a resposta a 4000 caracteres)
         await update.message.reply_text(f"🔎 Resultado para CPF {cpf_input}:\n\n{formatted_data[:4000]}")  # Limita a resposta a 4000 caracteres
     
     except requests.exceptions.RequestException as e:
@@ -46,10 +46,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Configuração do bot
 if __name__ == '__main__':
+    # Criando a aplicação do bot com o token lido das variáveis de ambiente
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
     # Adicionando os handlers para os comandos
     app.add_handler(CommandHandler('start', start))  # Comando /start
     app.add_handler(CommandHandler('cpf', cpf))  # Comando /cpf
 
-    app.run_polling()  # Inicia o bot
+    # Inicia o bot para começar a ouvir os comandos
+    app.run_polling()  # Inicia o bot com polling
