@@ -1,12 +1,10 @@
 import os
-import requests
+import subprocess
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 TELEGRAM_TOKEN = os.getenv("7664162459:AAH4Edm5i9Ju8htfmHgVhxcV2C94J4mNcJg")
-EXATO_TOKEN = '268753a9b3a24819ae0f02159dee6724'
 
-# Função para o comando /cpf
 async def cpf(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text('Por favor, envie o CPF. Exemplo: /cpf 18845258653')
@@ -14,21 +12,31 @@ async def cpf(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     cpf_input = context.args[0]
     
-    url = f"https://api.exato.digital/br/exato/cadastro/pessoa-fisica?token={EXATO_TOKEN}&cpf={cpf_input}&relacionados=true&get_rf_information_when_contact_not_found=true&format=json"
+    # Comando CURL em bash
+    url = "https://api.exato.digital/br/exato/cadastro/pessoa-fisica?lightweight=true"
+    data = f"cpf={cpf_input}&relacionados=true&get_rf_information_when_contact_not_found=true"
     
+    # Executando o comando curl via subprocess
     try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        data = response.json()
+        result = subprocess.run(
+            ['curl', '-X', 'POST', url, 
+             '-H', 'accept: application/json',
+             '-H', 'Content-Type: application/x-www-form-urlencoded',
+             '-d', data], 
+            capture_output=True, text=True
+        )
 
-        # Formata o JSON de forma mais bonita
-        import json
-        formatted_data = json.dumps(data, indent=2, ensure_ascii=False)
+        if result.returncode != 0:
+            raise Exception(f"Erro ao executar curl: {result.stderr}")
 
-        await update.message.reply_text(f"🔎 Resultado para CPF {cpf_input}:\n\n{formatted_data[:4000]}")
+        # A resposta será em formato JSON, então podemos formatá-la
+        response_data = result.stdout
+        formatted_data = response_data[:4000]  # Limitando a resposta a 4000 caracteres
+
+        await update.message.reply_text(f"🔎 Resultado para CPF {cpf_input}:\n\n{formatted_data}")
     
-    except requests.exceptions.RequestException as e:
-        await update.message.reply_text(f"❌ Erro ao buscar CPF: {e}")
+    except Exception as e:
+        await update.message.reply_text(f"❌ Erro ao buscar CPF: {str(e)}")
 
 # Função para o comando /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -41,7 +49,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
-    app.add_handler(CommandHandler('start', start))   # <-- adicionamos aqui
+    app.add_handler(CommandHandler('start', start))
     app.add_handler(CommandHandler('cpf', cpf))
 
     app.run_polling()
