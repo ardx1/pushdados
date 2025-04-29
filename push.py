@@ -1,40 +1,38 @@
 import os
-import subprocess
+import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
+# Lendo o token do bot do Telegram a partir de uma variável de ambiente
 TELEGRAM_TOKEN = os.getenv("7664162459:AAH4Edm5i9Ju8htfmHgVhxcV2C94J4mNcJg")
+EXATO_TOKEN = os.getenv("268753a9b3a24819ae0f02159dee6724")
 
+# Função para o comando /cpf
 async def cpf(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text('Por favor, envie o CPF. Exemplo: /cpf 18845258653')
         return
 
     cpf_input = context.args[0]
+
+    # URL da API Exato
+    url = f"https://api.exato.digital/br/exato/cadastro/pessoa-fisica?token={EXATO_TOKEN}&cpf={cpf_input}&relacionados=true&get_rf_information_when_contact_not_found=true&format=json"
     
-    # Comando CURL em bash
-    url = "https://api.exato.digital/br/exato/cadastro/pessoa-fisica?lightweight=true"
-    data = f"cpf={cpf_input}&relacionados=true&get_rf_information_when_contact_not_found=true"
-    
-    # Executando o comando curl via subprocess
     try:
-        result = subprocess.run(
-            ['curl', '-X', 'POST', url, 
-             '-H', 'accept: application/json',
-             '-H', 'Content-Type: application/x-www-form-urlencoded',
-             '-d', data], 
-            capture_output=True, text=True
-        )
+        # Fazendo a requisição à API usando requests
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()  # Verifica se o status da resposta é 200
+        data = response.json()  # Obtém os dados em formato JSON
 
-        if result.returncode != 0:
-            raise Exception(f"Erro ao executar curl: {result.stderr}")
+        # Formata o JSON de forma mais legível
+        import json
+        formatted_data = json.dumps(data, indent=2, ensure_ascii=False)
 
-        # A resposta será em formato JSON, então podemos formatá-la
-        response_data = result.stdout
-        formatted_data = response_data[:4000]  # Limitando a resposta a 4000 caracteres
-
-        await update.message.reply_text(f"🔎 Resultado para CPF {cpf_input}:\n\n{formatted_data}")
+        # Envia a resposta de volta no Telegram
+        await update.message.reply_text(f"🔎 Resultado para CPF {cpf_input}:\n\n{formatted_data[:4000]}")  # Limita a resposta a 4000 caracteres
     
+    except requests.exceptions.RequestException as e:
+        await update.message.reply_text(f"❌ Erro ao buscar CPF: {e}")
     except Exception as e:
         await update.message.reply_text(f"❌ Erro ao buscar CPF: {str(e)}")
 
@@ -46,10 +44,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/cpf <número> - Consultar informações de um CPF.\n"
     )
 
+# Configuração do bot
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
-    app.add_handler(CommandHandler('start', start))
-    app.add_handler(CommandHandler('cpf', cpf))
+    # Adicionando os handlers para os comandos
+    app.add_handler(CommandHandler('start', start))  # Comando /start
+    app.add_handler(CommandHandler('cpf', cpf))  # Comando /cpf
 
-    app.run_polling()
+    app.run_polling()  # Inicia o bot
