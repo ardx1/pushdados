@@ -14,6 +14,9 @@ if not TELEGRAM_TOKEN:
 if not EXATO_TOKEN:
     raise ValueError("O token da API Exato não foi configurado corretamente!")
 
+# Imprimindo o token para garantir que ele está sendo lido corretamente (com cuidado, não imprima em produção)
+print(f"Token do Telegram lido corretamente: {TELEGRAM_TOKEN[:5]}...")  # Exibindo apenas os primeiros 5 caracteres para segurança
+
 # Função para o comando /cpf
 async def cpf(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
@@ -54,7 +57,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Configuração do bot
 if __name__ == '__main__':
     # Verificando o token
-    print(f"Usando o token: {TELEGRAM_TOKEN}")
+    print(f"Usando o token: {TELEGRAM_TOKEN[:5]}...")  # Imprimindo os primeiros 5 caracteres do token para debug
 
     # Criando a aplicação do bot com o token lido das variáveis de ambiente
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
