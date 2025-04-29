@@ -3,9 +3,16 @@ import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-# Lendo o token do bot do Telegram e o token da API Exato a partir de variáveis de ambiente
-TELEGRAM_TOKEN = os.getenv("7664162459:AAH4Edm5i9Ju8htfmHgVhxcV2C94J4mNcJg")  # Certifique-se de configurar essa variável no ambiente de produção
-EXATO_TOKEN = os.getenv("268753a9b3a24819ae0f02159dee6724")  # Certifique-se de configurar essa variável no ambiente de produção
+# Lendo o token do bot do Telegram a partir de uma variável de ambiente
+TELEGRAM_TOKEN = os.getenv("7664162459:AAH4Edm5i9Ju8htfmHgVhxcV2C94J4mNcJg")
+EXATO_TOKEN = os.getenv("268753a9b3a24819ae0f02159dee6724")
+
+# Verificando se o token foi lido corretamente
+if not TELEGRAM_TOKEN:
+    raise ValueError("O token do Telegram não foi configurado corretamente!")
+
+if not EXATO_TOKEN:
+    raise ValueError("O token da API Exato não foi configurado corretamente!")
 
 # Função para o comando /cpf
 async def cpf(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -46,6 +53,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Configuração do bot
 if __name__ == '__main__':
+    # Verificando o token
+    print(f"Usando o token: {TELEGRAM_TOKEN}")
+
     # Criando a aplicação do bot com o token lido das variáveis de ambiente
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
